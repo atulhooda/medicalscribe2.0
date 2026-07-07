@@ -1,0 +1,32 @@
+# Electron-builder ignore file
+# This overrides .gitignore for packaging purposes
+# NOTE: extraResources doesn't respect ignore files the same way as files does
+
+# Development files
+.DS_Store
+.pnpm-store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# Build artifacts (but NOT the .next/standalone directory)
+build/
+dist/
+release
+*.dmg
+
+# Ignore root node_modules but NOT standalone node_modules
+/node_modules
+
+# Ignore most of .next EXCEPT standalone
+apps/web/.next/cache
+apps/web/.next/server
+apps/web/.next/static
+apps/web/.next/types

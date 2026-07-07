@@ -1,0 +1,13 @@
+# Global default
+* @engageo
+
+# Security-sensitive paths
+/apps/web/src/app/api/ @engageo
+/apps/web/src/middleware.ts @engageo
+/packages/storage/src/ @engageo
+/packages/pipeline/transcribe/src/ @engageo
+/packages/pipeline/assemble/src/ @engageo
+/config/ @engageo
+/infra/ @engageo
+/.github/workflows/ @engageo
+/docs/compliance/ @engageo

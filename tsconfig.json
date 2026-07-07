@@ -1,0 +1,119 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@audio": [
+        "packages/pipeline/audio-ingest/src/index.ts"
+      ],
+      "@audio/*": [
+        "packages/pipeline/audio-ingest/src/*"
+      ],
+      "@transcription": [
+        "packages/pipeline/transcribe/src/index.ts"
+      ],
+      "@transcription/*": [
+        "packages/pipeline/transcribe/src/*"
+      ],
+      "@transcript-assembly": [
+        "packages/pipeline/assemble/src/index.ts"
+      ],
+      "@transcript-assembly/*": [
+        "packages/pipeline/assemble/src/*"
+      ],
+      "@note-core": [
+        "packages/pipeline/note-core/src/index.ts"
+      ],
+      "@note-core/*": [
+        "packages/pipeline/note-core/src/*"
+      ],
+      "@note-rendering": [
+        "packages/pipeline/render/src/index.ts"
+      ],
+      "@note-rendering/*": [
+        "packages/pipeline/render/src/*"
+      ],
+      "@llm": [
+        "packages/llm/src/index.ts"
+      ],
+      "@llm/*": [
+        "packages/llm/src/*"
+      ],
+      "@llm-medgemma": [
+        "packages/llm-medgemma/src/index.ts"
+      ],
+      "@llm-medgemma/*": [
+        "packages/llm-medgemma/src/*"
+      ],
+      "@medgemma-scribe": [
+        "packages/pipeline/medgemma-scribe/src/index.ts"
+      ],
+      "@medgemma-scribe/*": [
+        "packages/pipeline/medgemma-scribe/src/*"
+      ],
+      "@pipeline-errors": [
+        "packages/pipeline/shared/src/index.ts"
+      ],
+      "@pipeline-errors/*": [
+        "packages/pipeline/shared/src/*"
+      ],
+      "@storage": [
+        "packages/storage/src/index.ts"
+      ],
+      "@storage/*": [
+        "packages/storage/src/*"
+      ],
+      "@ui": [
+        "packages/ui/src/index.ts"
+      ],
+      "@ui/*": [
+        "packages/ui/src/*"
+      ],
+      "@ui/lib/*": [
+        "packages/ui/src/lib/*"
+      ]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "packages/**/*.js",
+    "packages/**/*.mjs",
+    "config/**/*.mjs",
+    "apps/web/*.ts",
+    "apps/web/*.tsx",
+    "apps/web/*.d.ts",
+    "apps/web/src/**/*.ts",
+    "apps/web/src/**/*.tsx",
+    "apps/web/src/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "apps/web/.next"
+  ]
+}

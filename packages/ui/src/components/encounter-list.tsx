@@ -1,0 +1,151 @@
+"use client"
+
+import type { Encounter } from "@storage/types"
+import { cn } from "@ui/lib/utils"
+import { Input } from "@ui/lib/ui/input"
+import { Button } from "@ui/lib/ui/button"
+import { ScrollArea } from "@ui/lib/ui/scroll-area"
+import { Search, FileText, Clock, Plus, Trash2 } from "lucide-react"
+import { useState, useMemo } from "react"
+import { formatDistanceToNow } from "date-fns"
+
+const VISIT_TYPE_LABELS: Record<string, string> = {
+  history_physical: "History & Physical",
+  problem_visit: "Problem Visit",
+  consult_note: "Consult Note",
+}
+
+interface EncounterListProps {
+  encounters: Encounter[]
+  selectedId: string | null
+  onSelect: (encounter: Encounter) => void
+  onNewEncounter: () => void
+  onDeleteEncounter?: (id: string) => void | Promise<void>
+  disabled?: boolean
+}
+
+export function EncounterList({
+  encounters,
+  selectedId,
+  onSelect,
+  onNewEncounter,
+  onDeleteEncounter,
+  disabled,
+}: EncounterListProps) {
+  const [search, setSearch] = useState("")
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return encounters
+    const q = search.toLowerCase()
+    return encounters.filter(
+      (e) =>
+        e.patient_name.toLowerCase().includes(q) ||
+        e.visit_reason.toLowerCase().includes(q) ||
+        e.patient_id.toLowerCase().includes(q),
+    )
+  }, [encounters, search])
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
+      <div className="border-b border-sidebar-border p-4">
+        <Button
+          onClick={onNewEncounter}
+          disabled={disabled}
+          className="w-full justify-start gap-2 rounded-xl bg-foreground text-background hover:bg-foreground/90"
+        >
+          <Plus className="h-4 w-4" />
+          New Encounter
+        </Button>
+      </div>
+
+      <div className="border-b border-sidebar-border p-5">
+        <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">Encounters</h2>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="rounded-full border-border bg-background pl-10 text-foreground placeholder:text-muted-foreground"
+            disabled={disabled}
+          />
+        </div>
+      </div>
+
+      <ScrollArea className="flex-1 min-h-0">
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <FileText className="mb-3 h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {encounters.length === 0 ? "No encounters yet" : "No matching encounters"}
+            </p>
+          </div>
+        ) : (
+          <div className="p-3">
+            {filtered.map((encounter) => (
+              <div
+                key={encounter.id}
+                className={cn(
+                  "relative mb-1 w-full rounded-xl p-3 text-left transition-colors",
+                  "hover:bg-sidebar-accent",
+                  "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring",
+                  selectedId === encounter.id && "bg-sidebar-accent",
+                )}
+              >
+                <button
+                  onClick={() => onSelect(encounter)}
+                  disabled={disabled}
+                  className={cn(
+                    "w-full text-left",
+                    "focus-visible:outline-none",
+                    "disabled:pointer-events-none disabled:opacity-50",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1 pr-8">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {encounter.patient_name || "Unknown patient"}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {VISIT_TYPE_LABELS[encounter.visit_reason] || encounter.visit_reason || "No reason specified"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {formatDistanceToNow(new Date(encounter.created_at), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                </button>
+                {onDeleteEncounter ? (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void onDeleteEncounter(encounter.id)
+                    }}
+                    disabled={disabled}
+                    aria-label="Delete encounter"
+                    title="Delete encounter"
+                    className={cn(
+                      "absolute right-3 top-3 rounded-md p-1 text-muted-foreground/70 transition-colors",
+                      "hover:bg-sidebar-accent hover:text-foreground",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "disabled:pointer-events-none disabled:opacity-50",
+                    )}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+
+    </div>
+  )
+}

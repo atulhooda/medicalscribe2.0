@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../../",
+    "paths": {
+      "@/*": ["apps/web/src/*"],
+      "@audio": ["packages/pipeline/audio-ingest/src/index.ts"],
+      "@audio/*": ["packages/pipeline/audio-ingest/src/*"],
+      "@transcription": ["packages/pipeline/transcribe/src/index.ts"],
+      "@transcription/*": ["packages/pipeline/transcribe/src/*"],
+      "@transcript-assembly": ["packages/pipeline/assemble/src/index.ts"],
+      "@transcript-assembly/*": ["packages/pipeline/assemble/src/*"],
+      "@note-core": ["packages/pipeline/note-core/src/index.ts"],
+      "@note-core/*": ["packages/pipeline/note-core/src/*"],
+      "@note-rendering": ["packages/pipeline/render/src/index.ts"],
+      "@note-rendering/*": ["packages/pipeline/render/src/*"],
+      "@llm": ["packages/llm/src/index.ts"],
+      "@llm/*": ["packages/llm/src/*"],
+      "@llm-medgemma": ["packages/llm-medgemma/src/index.ts"],
+      "@llm-medgemma/*": ["packages/llm-medgemma/src/*"],
+      "@medgemma-scribe": ["packages/pipeline/medgemma-scribe/src/index.ts"],
+      "@medgemma-scribe/*": ["packages/pipeline/medgemma-scribe/src/*"],
+      "@pipeline-errors": ["packages/pipeline/shared/src/index.ts"],
+      "@pipeline-errors/*": ["packages/pipeline/shared/src/*"],
+      "@storage": ["packages/storage/src/index.ts"],
+      "@storage/*": ["packages/storage/src/*"],
+      "@ui": ["packages/ui/src/index.ts"],
+      "@ui/*": ["packages/ui/src/*"],
+      "@ui/lib/*": ["packages/ui/src/lib/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
