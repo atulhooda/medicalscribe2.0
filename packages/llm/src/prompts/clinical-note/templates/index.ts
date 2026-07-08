@@ -12,19 +12,37 @@
 const DEFAULT_TEMPLATE = `# History and Physical
 
 ## Chief Complaint
-{{chief_complaint_in_patient_words}}
+{{chief_complaint_one_short_line}}
 
 ## History of Present Illness
-{{hpi_narrative}}
-
-## Review of Systems
-{{ros_bullet_points}}
+{{hpi_as_bullet_points_onset_timeline_severity_prior_care_tests_treatments}}
 
 ## Past Medical History
-{{pmh}}
+{{pmh_bullet_points_conditions_surgeries_hospitalizations_prior_investigations}}
 
 ## Medications
-{{medications_bullet_points}}
+{{current_medications_bullet_points_with_dose_and_frequency}}
+
+## Allergies
+{{allergies_bullet_points}}
+
+## Family History
+{{family_history_bullet_points}}
+
+## Social History
+{{social_history_bullet_points_occupation_habits_lifestyle}}
+
+## Review of Systems
+{{ros_bullet_points_positives_and_pertinent_negatives}}
+
+## Physical Examination
+{{physical_exam_findings_bullet_points}}
+
+## Assessment
+{{assessment_bullet_points_working_impression}}
+
+## Plan
+{{plan_bullet_points_tests_medications_advice_follow_up}}
 `;
 
 /**

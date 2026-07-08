@@ -60,6 +60,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Keep the Sarvam Node SDK (server-only: does file I/O + cloud-storage
+  // upload/download) out of the webpack bundle so it runs natively.
+  serverExternalPackages: ['sarvamai'],
   images: {
     unoptimized: true,
   },

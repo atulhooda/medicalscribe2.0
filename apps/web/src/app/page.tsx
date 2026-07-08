@@ -12,7 +12,7 @@ import type { Encounter } from "@storage/types"
 import { useEncounters, EncounterList, IdleView, NewEncounterForm, RecordingView, ProcessingView, ErrorBoundary, PermissionsDialog, SettingsDialog, SettingsBar, ModelIndicator, LocalSetupWizard, useHttpsWarning } from "@ui"
 import { NoteEditor } from "@note-rendering"
 import { useAudioRecorder, type RecordedSegment, warmupMicrophonePermission, warmupSystemAudioPermission } from "@audio"
-import { useSegmentUpload, type UploadError } from "@transcription";
+import { useSegmentUpload, type UploadError } from "@transcription/hooks/use-segment-upload";
 import { WorkflowErrorDisplay } from "./workflow-error-display"
 import { generateClinicalNote } from "@/app/actions"
 import {

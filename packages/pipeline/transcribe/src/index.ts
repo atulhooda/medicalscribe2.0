@@ -5,10 +5,12 @@ export type { PendingSegment, UploadError } from "./hooks/use-segment-upload"
 
 // Transcription providers
 export { transcribeWavBuffer as transcribeWithSarvam } from "./providers/sarvam-transcriber"
+export { transcribeWavBuffer as transcribeWithSarvamBatch } from "./providers/sarvam-batch-transcriber"
 export { transcribeWavBuffer as transcribeWithWhisperLocal } from "./providers/whisper-local-transcriber"
 export { transcribeWavBuffer as transcribeWithMedASR } from "./providers/medasr-transcriber"
 export {
   resolveTranscriptionProvider,
+  resolveFinalTranscriptionProvider,
   transcribeWithResolvedProvider,
   type ResolvedTranscriptionProvider,
   type TranscriptionProvider,

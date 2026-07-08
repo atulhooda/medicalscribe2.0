@@ -229,7 +229,22 @@ function ReportField({ label, value }: { label: string; value: string }) {
   )
 }
 
-type IcdCode = { code: string; title: string; rationale?: string }
+type MedicalCode = { system: string; code: string; title: string; rationale?: string }
+
+function systemChipClass(system: string): string {
+  switch (system) {
+    case "ICD-11":
+      return "bg-primary/10 text-primary ring-primary/20"
+    case "NAMASTE":
+      return "bg-amber-100 text-amber-700 ring-amber-300/50"
+    case "SNOMED CT":
+      return "bg-emerald-100 text-emerald-700 ring-emerald-300/50"
+    case "ICD-10":
+      return "bg-secondary text-muted-foreground ring-border"
+    default:
+      return "bg-muted text-muted-foreground ring-border"
+  }
+}
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
@@ -252,7 +267,7 @@ function bodyToHtml(body: string): string {
 }
 
 // Build a standalone, print-ready HTML document of the report (for "Export → PDF").
-function buildReportHtml(encounter: Encounter, markdown: string, icdCodes: IcdCode[] | null): string {
+function buildReportHtml(encounter: Encounter, markdown: string, icdCodes: MedicalCode[] | null): string {
   const created = new Date(encounter.created_at)
   const visitLabel = encounter.visit_reason
     ? VISIT_TYPE_LABELS[encounter.visit_reason] || encounter.visit_reason
@@ -271,16 +286,16 @@ function buildReportHtml(encounter: Encounter, markdown: string, icdCodes: IcdCo
 
   const icdHtml =
     icdCodes && icdCodes.length > 0
-      ? `<section><h3><span class="num">ICD</span> Suggested ICD-11 Codes</h3><table class="icd"><thead><tr><th>Code</th><th>Title</th><th>Rationale</th></tr></thead><tbody>${icdCodes
+      ? `<section><h3><span class="num">RX</span> Suggested Medical Codes</h3><table class="icd"><thead><tr><th>System</th><th>Code</th><th>Title</th><th>Rationale</th></tr></thead><tbody>${icdCodes
           .map(
             (c) =>
-              `<tr><td class="code">${escapeHtml(c.code)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(
-                c.rationale || "",
-              )}</td></tr>`,
+              `<tr><td class="sys">${escapeHtml(c.system)}</td><td class="code">${escapeHtml(c.code)}</td><td>${escapeHtml(
+                c.title,
+              )}</td><td>${escapeHtml(c.rationale || "")}</td></tr>`,
           )
           .join(
             "",
-          )}</tbody></table><p class="disclaimer">AI-suggested codes — verify against the official ICD-11 browser before clinical or billing use.</p></section>`
+          )}</tbody></table><p class="disclaimer">AI-suggested across ICD-11, NAMASTE, SNOMED CT &amp; ICD-10 — verify against each official source before clinical or billing use.</p></section>`
       : ""
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(
@@ -302,7 +317,7 @@ h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;border-bottom:
 .body ul{margin:0 0 8px;padding-left:18px}.body li{font-size:14px;line-height:1.7}
 table.icd{width:100%;border-collapse:collapse;margin-top:4px}
 table.icd th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b6560;border-bottom:1px solid #e4ddd5;padding:6px 8px}
-table.icd td{font-size:13px;padding:7px 8px;border-bottom:1px solid #f0ece6;vertical-align:top}table.icd td.code{font-family:ui-monospace,monospace;font-weight:600;color:#2339c4;white-space:nowrap}
+table.icd td{font-size:13px;padding:7px 8px;border-bottom:1px solid #f0ece6;vertical-align:top}table.icd td.code{font-family:ui-monospace,monospace;font-weight:600;color:#2339c4;white-space:nowrap}table.icd td.sys{font-family:ui-monospace,monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6b6560;white-space:nowrap}
 .disclaimer{font-size:11px;color:#6b6560;margin-top:8px;font-style:italic}
 footer{border-top:1px solid #e4ddd5;margin-top:28px;padding-top:12px;font-size:11px;color:#6b6560;display:flex;justify-content:space-between}
 @media print{body{padding:0}@page{margin:18mm}}
@@ -322,7 +337,7 @@ footer{border-top:1px solid #e4ddd5;margin-top:28px;padding-top:12px;font-size:1
 interface ClinicalNoteViewProps {
   markdown: string
   encounter: Encounter
-  icdCodes: IcdCode[] | null
+  icdCodes: MedicalCode[] | null
   icdLoading: boolean
   icdError: string
   onSuggestIcd: () => void
@@ -390,13 +405,16 @@ function ClinicalNoteView({ markdown, encounter, icdCodes, icdLoading, icdError,
             </div>
           )}
 
-          {/* AI ICD-11 coding */}
+          {/* AI multi-system medical coding */}
           <section className="mt-8 border-t border-border pt-6">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="flex items-baseline gap-2.5 font-display text-[12.5px] font-semibold uppercase tracking-[0.09em] text-foreground">
-                <span className="font-mono text-primary">ICD</span>
-                <span>Suggested ICD-11 Codes</span>
-              </h3>
+              <div>
+                <h3 className="flex items-baseline gap-2.5 font-display text-[12.5px] font-semibold uppercase tracking-[0.09em] text-foreground">
+                  <span className="font-mono text-primary">RX</span>
+                  <span>Suggested Medical Codes</span>
+                </h3>
+                <p className="mt-1 text-[11px] text-muted-foreground">ICD-11 · NAMASTE · SNOMED CT · ICD-10</p>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -424,7 +442,7 @@ function ClinicalNoteView({ markdown, encounter, icdCodes, icdLoading, icdError,
 
             {icdCodes === null ? (
               <p className="text-[13px] leading-relaxed text-muted-foreground">
-                Let AI detect the ICD-11 codes relevant to the documented problems.
+                Let AI detect the relevant codes for the documented problems across ICD-11, NAMASTE, SNOMED CT and ICD-10.
               </p>
             ) : icdCodes.length === 0 ? (
               <p className="text-[13px] text-muted-foreground">No codable conditions detected.</p>
@@ -432,21 +450,27 @@ function ClinicalNoteView({ markdown, encounter, icdCodes, icdLoading, icdError,
               <>
                 <div className="overflow-hidden rounded-xl border border-border">
                   {icdCodes.map((c, i) => (
-                    <div key={i} className={cn("flex gap-4 px-4 py-3", i > 0 && "border-t border-border/70")}>
-                      <span className="h-fit shrink-0 rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary ring-1 ring-inset ring-primary/15">
-                        {c.code}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.title}</p>
-                        {c.rationale && (
-                          <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{c.rationale}</p>
-                        )}
+                    <div key={i} className={cn("px-4 py-3", i > 0 && "border-t border-border/70")}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset",
+                            systemChipClass(c.system),
+                          )}
+                        >
+                          {c.system}
+                        </span>
+                        <span className="font-mono text-[13px] font-semibold text-foreground">{c.code}</span>
+                        <span className="text-sm text-foreground">{c.title}</span>
                       </div>
+                      {c.rationale && (
+                        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{c.rationale}</p>
+                      )}
                     </div>
                   ))}
                 </div>
                 <p className="mt-2.5 text-[11px] italic text-muted-foreground">
-                  AI-suggested — verify against the official ICD-11 browser before clinical or billing use.
+                  AI-suggested — verify each against its official source (ICD-11 / NAMASTE / SNOMED CT / ICD-10) before clinical or billing use.
                 </p>
               </>
             )}
@@ -635,7 +659,7 @@ export function NoteEditor({ encounter, onSave }: NoteEditorProps) {
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState(false)
   const [noteViewMode, setNoteViewMode] = useState<"preview" | "edit">("preview")
-  const [icdCodes, setIcdCodes] = useState<IcdCode[] | null>(null)
+  const [icdCodes, setMedicalCodes] = useState<MedicalCode[] | null>(null)
   const [icdLoading, setIcdLoading] = useState(false)
   const [icdError, setIcdError] = useState("")
 
@@ -659,7 +683,7 @@ export function NoteEditor({ encounter, onSave }: NoteEditorProps) {
     setOpenClawMessages([])
     setOpenClawInput("")
     setOpenClawSending(false)
-    setIcdCodes(null)
+    setMedicalCodes(null)
     setIcdError("")
     setIcdLoading(false)
   }, [encounter.id, encounter.note_text])
@@ -736,9 +760,9 @@ export function NoteEditor({ encounter, onSave }: NoteEditorProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: noteMarkdown, transcript: encounter.transcript_text || "" }),
       })
-      const data = (await res.json()) as { codes?: IcdCode[]; error?: string }
+      const data = (await res.json()) as { codes?: MedicalCode[]; error?: string }
       if (!res.ok || data.error) throw new Error(data.error || `Request failed (${res.status})`)
-      setIcdCodes(data.codes || [])
+      setMedicalCodes(data.codes || [])
     } catch (e) {
       setIcdError(e instanceof Error ? e.message : "Failed to suggest ICD-11 codes")
     } finally {

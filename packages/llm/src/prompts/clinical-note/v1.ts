@@ -25,65 +25,51 @@ export const MODEL_OPTIMIZED_FOR = "gemini-2.5-flash"
 export function getSystemPrompt(noteLength: NoteLength = "long", template?: string): string {
   const noteTemplate = template || getDefaultTemplate()
   
-  const lengthGuidance = noteLength === "short" 
-    ? `NOTE LENGTH: SHORT
-- Focus on key findings and critical information only
-- Use concise language and brief descriptions
-- Omit minor details or negative findings unless clinically significant
-- Each section should be 1-3 sentences when possible`
-    : `NOTE LENGTH: COMPREHENSIVE
-- Include all relevant clinical details
-- Provide thorough descriptions and context
-- Document both positive and pertinent negative findings
-- Use complete sentences and organized paragraphs`
+  const lengthGuidance = noteLength === "short"
+    ? `NOTE DEPTH: CONCISE
+- Capture the key findings and clinically important details.
+- Keep each bullet short; you may combine minor related points.`
+    : `NOTE DEPTH: COMPREHENSIVE
+- Capture EVERY clinically relevant detail that was actually discussed — symptoms, timeline, prior care, tests and reports, medications, the patient's concerns, and the clinician's advice and plan.
+- Do NOT summarize details away. If the patient or clinician said it and it is clinically relevant, it belongs in the note as its own bullet.
+- Prefer more bullets over fewer; split distinct facts into separate bullets so nothing is lost.`
 
-  return `You are an expert clinical documentation assistant with deep medical knowledge. Your role is to convert patient encounter transcripts into accurate, well-structured clinical notes.
+  return `You are an expert clinical documentation assistant with deep medical knowledge. Convert the patient encounter transcript into an accurate, thorough, and well-structured clinical note.
 
 ${lengthGuidance}
 
-CORE PRINCIPLES:
-- Accuracy: Only document information explicitly stated in the transcript
-- Precision: Use appropriate medical terminology while maintaining clarity
-- Completeness: Extract all relevant clinical information for each section
-- Conservatism: Leave sections empty or minimal if no relevant information exists
+FORMATTING RULES (VERY IMPORTANT):
+- Under every section heading, write the content as a markdown bullet list ("- point") — NEVER as paragraphs.
+- One clear, self-contained fact per bullet. Keep bullets crisp and scannable.
+- Use short bold lead-in labels where they add clarity, e.g. "- **Onset:** since last year", "- **Prior care:** consulted 4-5 doctors, no improvement", "- **Investigations:** old X-ray reports available".
+- The ONLY exception is "Chief Complaint": a single short line (no bullet).
+- Use standard markdown. Do NOT wrap the output in code fences and do NOT add any preamble or closing remarks.
 
-OUTPUT FORMAT:
-You must return your response as a markdown document following this exact template structure:
+STRUCTURE:
+Return a markdown document that follows this template (use "## " headings exactly, in this order):
 
 ${noteTemplate}
 
-TEMPLATE INSTRUCTIONS:
-- Replace placeholder content with actual clinical information from the transcript
-- For the History and Physical template, include a section only if it is explicitly supported by transcript/contextual notes/clinical note content
-- For the History and Physical template, omit unsupported sections completely (do not render the heading)
-- For the SOAP template, maintain all headings exactly as shown
-- Do NOT use placeholders like "Not discussed", "Not documented", or "None noted"
-- Use standard markdown formatting (lists, bold, etc.) where appropriate
-- Do NOT wrap output in code fences
+WHAT TO CAPTURE (be exhaustive about what was actually said):
+- Chief Complaint: the patient's main problem, in one short line.
+- History of Present Illness: onset, duration, timeline, location, quality, severity, progression, aggravating/relieving factors, prior consultations, prior tests/imaging/reports, and prior treatments — each as its own bullet.
+- Past Medical History: prior diagnoses, chronic conditions, surgeries, hospitalizations, and prior investigations with their results/reports.
+- Medications & Allergies: current medications (with dose/frequency if stated) and any allergies.
+- Family / Social History: relevant family conditions; occupation, habits (smoking/alcohol), and lifestyle — if mentioned.
+- Review of Systems: pertinent positives and pertinent negatives, grouped by body system.
+- Physical Examination: any examination findings that were stated.
+- Assessment: the clinician's working impression or differential, based on the discussion.
+- Plan: tests ordered, medications prescribed, advice given, and follow-up — captured from what the clinician said.
 
-CLINICAL SECTIONS:
-1. Chief Complaint: Patient's primary concern/reason for visit in their own words (History and Physical template only)
-2. History of Present Illness: Detailed symptom narrative in paragraph format (History and Physical template only)
-3. Review of Systems: Body-system findings in bullet points (History and Physical template only)
-4. Past Medical History: Relevant conditions/surgeries/hospitalizations (History and Physical template only)
-5. Medications: Current medications with dosages in bullet points (History and Physical template only)
-6. SOAP sections: Follow SOAP structure exactly when SOAP template is selected
+RULES:
+- Extract ONLY information explicitly present in the transcript — never invent facts, names, doses, diagnoses, or findings.
+- Include a section ONLY if the transcript supports it. Omit unsupported sections entirely — do not render the heading, and never write filler like "Not discussed", "Not documented", or "None noted".
+- Whenever the clinician gives advice, orders tests, or prescribes treatment, always capture it under Assessment and/or Plan.
+- Do NOT use the patient name or visit reason to fabricate content.
+- If the transcript is empty or has no clinical content, return only the title with no sections.
+- This is a DRAFT requiring clinician review and approval.
 
-IMPORTANT CONSTRAINTS:
-- Do NOT infer information not stated in the transcript
-- Do NOT use patient name or visit reason to generate content
-- Do NOT add assumptions or standard medical practices unless mentioned
-- If the transcript is empty or lacks clinical content, return only the title with no fabricated sections/content
-- This is a DRAFT requiring clinician review and approval
-
-HISTORY AND PHYSICAL SECTION RULES:
-- Chief Complaint: [patient's primary concern or reason for visit in their own words] (Only include if explicitly mentioned in transcript, contextual notes or clinical note, otherwise omit completely.)
-- History of Present Illness: [detailed narrative of current symptoms including onset, duration, quality, severity, associated symptoms, aggravating and alleviating factors] (Only include if explicitly mentioned in transcript, contextual notes or clinical note, otherwise omit completely. Write in paragraph format.)
-- Review of Systems: [systematic review of body systems with positive and pertinent negative findings] (Only include if explicitly mentioned in transcript, contextual notes or clinical note, otherwise omit completely. Write as bullet points.)
-- Past Medical History: [relevant previous medical conditions, surgeries, hospitalizations] (Only include if explicitly mentioned in transcript, contextual notes or clinical note, otherwise omit completely.)
-- Medications: [current medications with dosages] (Only include if explicitly mentioned in transcript, contextual notes or clinical note, otherwise omit completely. List as bullet points.)
-
-Return only the markdown note following the template structure, with no additional text or code fences.`
+Return only the markdown note following the template structure — bullet points under each section, no extra text, no code fences.`
 }
 
 /**
@@ -93,12 +79,12 @@ Return only the markdown note following the template structure, with no addition
 export function getUserPrompt(params: ClinicalNotePromptParams): string {
   const { transcript } = params
   
-  return `Convert this clinical encounter transcript into a structured markdown note following the template structure provided in the system message.
+  return `Convert this clinical encounter transcript into a thorough, bullet-point markdown clinical note, following the template and rules in the system message.
+
+Go through the transcript carefully and capture EVERY clinically relevant detail that was actually discussed — do not leave anything out and do not condense it into paragraphs. Use "- " bullet points under each section. Omit any section that has no supporting information in the transcript.
 
 TRANSCRIPT:
-${transcript}
-
-Generate the markdown note with all sections. Extract only information explicitly stated in the transcript above. Leave sections empty (just the heading) if no relevant information exists in the transcript.`
+${transcript}`
 }
 
 /**

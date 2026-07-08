@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server"
 import { toPipelineError } from "@pipeline-errors"
-import { parseWavHeader, resolveTranscriptionProvider, transcribeWithResolvedProvider } from "@transcription"
+import { parseWavHeader, resolveFinalTranscriptionProvider, transcribeWithResolvedProvider } from "@transcription"
 import { transcriptionSessionStore } from "@transcript-assembly"
 import { writeAuditEntry } from "@storage/audit-log"
 
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     const likelySilentAudio = isLikelySilentPcm16(arrayBuffer)
 
     try {
-      const resolvedProvider = resolveTranscriptionProvider()
+      const resolvedProvider = resolveFinalTranscriptionProvider()
       const startedAtMs = Date.now()
       const transcript = await transcribeWithResolvedProvider(
         Buffer.from(arrayBuffer),
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       })
     } catch (error) {
       console.error("Final audio processing failed", error)
-      const resolvedProvider = resolveTranscriptionProvider()
+      const resolvedProvider = resolveFinalTranscriptionProvider()
       const pipelineError = toPipelineError(error, {
         code: "api_error",
         message: "Transcription API failure",

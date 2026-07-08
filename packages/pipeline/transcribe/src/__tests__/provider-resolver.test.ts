@@ -1,6 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { resolveTranscriptionProvider } from "../providers/provider-resolver.js"
+import {
+  resolveFinalTranscriptionProvider,
+  resolveTranscriptionProvider,
+} from "../providers/provider-resolver.js"
 import { transcribeWavBuffer as transcribeWithWhisperLocal } from "../providers/whisper-local-transcriber.js"
 
 test("resolveTranscriptionProvider defaults to sarvam with saarika model", () => {
@@ -13,6 +16,18 @@ test("resolveTranscriptionProvider supports explicit provider aliases", () => {
   assert.equal(resolveTranscriptionProvider({ TRANSCRIPTION_PROVIDER: "medasr" }).provider, "medasr")
   assert.equal(resolveTranscriptionProvider({ TRANSCRIPTION_PROVIDER: "sarvam" }).provider, "sarvam")
   assert.equal(resolveTranscriptionProvider({ TRANSCRIPTION_PROVIDER: "whisper_local" }).provider, "whisper_local")
+  const batch = resolveTranscriptionProvider({ TRANSCRIPTION_PROVIDER: "sarvam_batch" })
+  assert.equal(batch.provider, "sarvam_batch")
+  assert.equal(batch.model, "saaras:v3")
+})
+
+test("resolveFinalTranscriptionProvider defaults to Sarvam Batch STT", () => {
+  assert.equal(resolveFinalTranscriptionProvider({}).provider, "sarvam_batch")
+  // Explicit override forces the synchronous path.
+  assert.equal(
+    resolveFinalTranscriptionProvider({ FINAL_TRANSCRIPTION_PROVIDER: "sarvam" }).provider,
+    "sarvam",
+  )
 })
 
 test("whisper local transcriber retries transient failures and returns text", async () => {

@@ -5,12 +5,25 @@ import { getGeminiApiKey } from "@storage/server-api-keys"
 export const runtime = "nodejs"
 
 const SYSTEM_PROMPT = [
-  "You are a clinical coding assistant. Given a clinical note (and optionally the raw transcript), identify the most relevant ICD-11 codes (WHO ICD-11 for Mortality and Morbidity Statistics, MMS) for the documented problems, symptoms, and diagnoses.",
-  "Return one code per line in exactly this pipe-delimited format: CODE | Title | one short reason grounded in the documentation.",
-  "Use real ICD-11 stem codes (for example 'CA23' for asthma, 'ME84.2' for pain in limb). Prefer specific diagnoses; include symptom codes when no firm diagnosis is documented.",
-  "List at most 8 codes, most relevant first. If nothing is codable, output exactly: NONE.",
-  "Do not add headers, numbering, commentary, or markdown code fences.",
+  "You are a clinical coding assistant for Indian healthcare. Given a clinical note (and optionally the raw transcript), suggest standardized medical codes for the documented problems, symptoms, and diagnoses across these coding systems:",
+  "ICD-11 (WHO ICD-11 for Mortality and Morbidity Statistics); NAMASTE (India's National AYUSH Morbidity & Standardized Terminologies for Ayurveda, Siddha and Unani); SNOMED CT (international clinical terminology); ICD-10 (legacy billing).",
+  "Return one code per line in exactly this pipe-delimited format: SYSTEM | CODE | Title | one short reason grounded in the documentation.",
+  "SYSTEM must be exactly one of: ICD-11, NAMASTE, SNOMED CT, ICD-10.",
+  "Use real codes in each system's correct format (e.g. ICD-11 'CA23' for asthma; ICD-10 'J45.909'; SNOMED CT '195967001'). For NAMASTE, give the closest AYUSH term/code only when clinically appropriate for traditional-medicine documentation.",
+  "Group by system (ICD-11 first), most relevant first, at most 3 codes per system. Skip a system if nothing applicable. If nothing is codable at all, output exactly: NONE.",
+  "Only include codes you are reasonably confident about. Do not add headers, numbering, commentary, or markdown fences.",
 ].join(" ")
+
+const SYSTEM_ALIASES: Record<string, string> = {
+  "icd-11": "ICD-11",
+  icd11: "ICD-11",
+  namaste: "NAMASTE",
+  "snomed ct": "SNOMED CT",
+  "snomed-ct": "SNOMED CT",
+  snomed: "SNOMED CT",
+  "icd-10": "ICD-10",
+  icd10: "ICD-10",
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,20 +41,21 @@ export async function POST(request: NextRequest) {
 
     const raw = await runLLMRequest({ system: SYSTEM_PROMPT, prompt, apiKey })
 
-    const codes: { code: string; title: string; rationale: string }[] = []
+    const codes: { system: string; code: string; title: string; rationale: string }[] = []
     for (const line of raw.split("\n")) {
       const cleaned = line.trim().replace(/^[-*\d.]+\s*/, "")
       if (!cleaned || /^none$/i.test(cleaned)) continue
-      const parts = cleaned.split("|").map((p) => p.trim())
-      if (parts.length < 2) continue
-      const code = parts[0].replace(/`/g, "")
-      if (!code || !/^[0-9A-Za-z]/.test(code)) continue
-      codes.push({ code, title: parts[1] || "", rationale: parts[2] || "" })
+      const parts = cleaned.split("|").map((p) => p.trim().replace(/`/g, ""))
+      if (parts.length < 3) continue
+      const system = SYSTEM_ALIASES[parts[0].toLowerCase()] || parts[0]
+      const code = parts[1]
+      if (!code) continue
+      codes.push({ system, code, title: parts[2] || "", rationale: parts[3] || "" })
     }
 
     return Response.json({ codes })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "ICD suggestion failed"
+    const message = error instanceof Error ? error.message : "Code suggestion failed"
     return Response.json({ error: message }, { status: 500 })
   }
 }
