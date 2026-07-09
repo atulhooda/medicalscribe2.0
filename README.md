@@ -57,4 +57,3 @@ Everything is env-driven (see `apps/web/.env.local.example`): transcription prov
 ## Notes
 
 All AI-generated notes and medical codes are **drafts requiring clinician review**.
-
