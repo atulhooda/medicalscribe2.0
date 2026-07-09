@@ -58,6 +58,3 @@ Everything is env-driven (see `apps/web/.env.local.example`): transcription prov
 
 All AI-generated notes and medical codes are **drafts requiring clinician review**.
 
-## License
-
-MIT © Engageo

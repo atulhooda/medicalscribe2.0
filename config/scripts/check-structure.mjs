@@ -11,13 +11,6 @@ const allowedRootDirs = new Set([
   "packages",
   "config",
   "build",
-  "docker",
-  "docs",
-  "infra",
-  "local-only",
-  "models",
-  "output",
-  "recordings",
   "scripts",
   "node_modules",
 ])
@@ -26,18 +19,9 @@ const allowedRootFiles = new Set([
   "pnpm-lock.yaml",
   "tsconfig.json",
   "README.md",
-  "CONTRIBUTING.md",
   "LICENSE",
   "requirements.txt",
-  "architecture.md",
   ".gitignore",
-  "BUILD_STATUS.md",
-  "MONITORING_GUIDE.md",
-  "QUICK_START.md",
-  "STABILITY_FIXES.md",
-  "TEST_SESSION.md",
-  ".dockerignore",
-  "docker-compose.engageo.yml",
   "tsconfig.tsbuildinfo",
 ])
 const buildArtifacts = new Set([".next", ".tests-dist", "dist"])
@@ -51,7 +35,6 @@ const pipelineStages = new Set([
   "render",
   "shared",
   "medgemma-scribe",
-  "eval",
 ])
 
 const errors = []
