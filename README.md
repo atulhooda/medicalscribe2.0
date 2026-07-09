@@ -1,439 +1,63 @@
-<div align="center">
+# Engageo Scribe
 
-<img src=".github/engageoscribe-banner.png" alt="EngageoScribe Banner" width="5%" />
+AI medical scribe — record a patient encounter, transcribe it with **Sarvam AI**, and generate a structured, bullet-point clinical note with **Google Gemini**. Runs as a local Next.js web app.
 
-# EngageoScribe
+## Features
 
-Open-source AI medical scribe for recording encounters and generating structured clinical notes.
+- **Speech-to-text (Sarvam AI)** — synchronous for live segments, and **Batch STT** for the full recording (no 30-second limit, handles long consults; Hindi / English / mixed).
+- **Clinical notes (Google Gemini)** — comprehensive, bullet-point History & Physical rendered as a clean report.
+- **Speaker diarization** — labels each turn as Doctor / Patient.
+- **Medical coding** — AI-suggested ICD-11, NAMASTE (AYUSH), SNOMED CT, and ICD-10 codes.
+- **Export** — copy, download markdown, or print to PDF.
+- **Local-first storage** — encounters are stored encrypted (AES-GCM) in the browser.
 
-<p>
-  <a href="https://github.com/engageo/EngageoScribe/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
-  </a>
-  <a href="https://discord.gg/BcNNspcNE8">
-    <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord">
-  </a>
-  <a href="https://www.loom.com/share/1ccd4eec00eb4ddab700d32734f33c28">
-    <img src="https://img.shields.io/badge/Demo-Watch-000000?style=for-the-badge" alt="Demo">
-  </a>
-</p>
+## Quick start
 
-</div>
-
-
-## Project Overview
-
-EngageoScribe is a free, MIT-licensed, open-source AI medical scribe that helps clinicians record patient encounters, transcribe audio, and generate structured draft clinical notes using LLMs. The default web deployment path is cloud mode: Sarvam speech-to-text + Google Gemini note generation. A fully local desktop path is also available, forked from [StenoAI](https://github.com/ruzin/stenoai).
-
-- [Demo](https://www.loom.com/share/1ccd4eec00eb4ddab700d32734f33c28)
-- [Architecture](./architecture.md)
-- [Contributing](./CONTRIBUTING.md)
-- [Download and Use Desktop](./docs/DOWNLOAD_AND_USE.md)
-- [Desktop Release Runbook](./docs/RELEASE_RUNBOOK.md)
-
-EngageoScribe is not HIPAA compliant yet. The team is actively working toward HIPAA compliance.
-
-## Demo
-
-[Demo](https://www.loom.com/share/1ccd4eec00eb4ddab700d32734f33c28)
-
-[![Watch Demo](.github/demo.gif)](https://www.loom.com/share/1ccd4eec00eb4ddab700d32734f33c28)
-
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=engageo%2FEngageoScribe&type=timeline&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=engageo/EngageoScribe&type=timeline&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=engageo/EngageoScribe&type=timeline&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=engageo/EngageoScribe&type=timeline&legend=top-left" />
- </picture>
-</a>
-
-
-## Download Desktop App (No Dev Setup)
-
-If you only want to try EngageoScribe as an app:
-
-1. Open [latest releases](https://github.com/engageo/EngageoScribe/releases/latest).
-2. Download the installer for your OS/arch.
-3. Run installer and complete first-run setup wizard.
-
-Full guide: [docs/DOWNLOAD_AND_USE.md](./docs/DOWNLOAD_AND_USE.md)
-
-
-## Quick Start (5 minutes)
-
-### 1. Install Prerequisites
+Requires Node.js 18+ and pnpm.
 
 ```bash
-node --version  # Check you have Node.js 18+
-# If not installed (macOS): brew install node
-# If installed but <18 (macOS): brew upgrade node
-npm install -g pnpm
-```
-
-### 2. Clone and Install
-
-```bash
-git clone https://github.com/engageo/EngageoScribe.git
-cd EngageoScribe
 pnpm install
 ```
 
-### 3. Configure Environment (Mixed Web Default)
-
-Create env defaults:
+Create `apps/web/.env.local` (copy `apps/web/.env.local.example`) and set your keys:
 
 ```bash
-pnpm run setup  # Auto-generates .env.local with secure storage key
+GEMINI_API_KEY="your-gemini-key"       # https://aistudio.google.com/app/apikey
+SARVAM_API_KEY="your-sarvam-key"       # https://dashboard.sarvam.ai/
+NEXT_PUBLIC_SECURE_STORAGE_KEY="..."   # generate: openssl rand -base64 32
 ```
 
-Edit `apps/web/.env.local` and add:
+Run the app:
 
 ```bash
-TRANSCRIPTION_PROVIDER=whisper_local
-WHISPER_LOCAL_MODEL=tiny.en
-ANTHROPIC_API_KEY=sk-ant-YOUR_KEY_HERE
-# NEXT_PUBLIC_SECURE_STORAGE_KEY is auto-generated, don't modify
+pnpm dev        # http://localhost:3001
 ```
 
-`OPENAI_API_KEY` is optional unless you switch to `TRANSCRIPTION_PROVIDER=whisper_openai`.
+## How it works
 
-### 4. Start the App
+1. Record the encounter in the browser.
+2. Live segments transcribe via Sarvam (sync) for a real-time preview.
+3. On stop, the full recording is transcribed via **Sarvam Batch STT** (async job: upload → poll → download).
+4. The transcript is sent to **Gemini**, which returns a structured, bullet-point clinical note.
+5. Review the note as a report — suggest medical codes, label speakers, and export to PDF.
 
-```bash
-pnpm dev:local    # One command: Whisper local server + web app
-```
+## Structure
 
-Optional desktop app path:
+- `apps/web/` — Next.js app (UI + API routes)
+- `packages/pipeline/` — audio ingest, transcription, note assembly, rendering
+- `packages/llm/` — Gemini client + clinical-note prompts
+- `packages/storage/` — encrypted local storage
+- `packages/ui/` — shared React components
+- `config/` — shared configuration
 
-```bash
-pnpm electron:dev
-```
+## Configuration
 
-Desktop production builds:
+Everything is env-driven (see `apps/web/.env.local.example`): transcription providers, models, batch mode/language/diarization, and timeouts. The authoritative full-recording transcription uses Sarvam Batch STT by default (`FINAL_TRANSCRIPTION_PROVIDER=sarvam_batch`).
 
-```bash
-pnpm build:desktop:mac
-pnpm build:desktop:win
-pnpm build:desktop:linux
-# or
-pnpm build:desktop:all
-```
+## Notes
 
-GA support target for packaged desktop releases:
-- macOS (mainstream current) `x64`, `arm64`
-- Windows (mainstream current) `x64`
-- Linux (mainstream current desktop distros) `x64`, `arm64`
-- Recommended minimum: 8GB RAM, 20GB free disk
-
-See release gate details in [docs/RELEASE_READINESS_CHECKLIST.md](./docs/RELEASE_READINESS_CHECKLIST.md).
-Manual reviewer sign-off template: [docs/MANUAL_SIGNOFF_TEMPLATE.md](./docs/MANUAL_SIGNOFF_TEMPLATE.md).
-
-## Quick Start (Docker)
-
-SAM is the easiest way to run EngageoScribe for new contributors: one command starts the web app and local Whisper transcription service.
-
-### 1. Create SAM env file
-
-```bash
-pnpm run setup
-```
-
-Edit `apps/web/.env.local` and set:
-
-```bash
-ANTHROPIC_API_KEY=sk-ant-YOUR_KEY_HERE
-```
-
-### 2. Start SAM
-
-```bash
-docker compose -f docker-compose.engageo.yml up --build
-```
-
-### 3. Open the app
-
-```bash
-http://localhost:3001
-```
-
-### 4. Verify Whisper health (optional)
-
-```bash
-curl http://127.0.0.1:8002/health
-```
-
----
-
-## Runtime Modes
-
-EngageoScribe supports three workflows. **Mixed web mode is the default path.**
-
-### Mixed Web (default)
-- Transcription: Sarvam hosted speech-to-text (`saarika:v2.5`)
-- Notes: Google Gemini (`gemini-2.5-flash`)
-- Requires `SARVAM_API_KEY` and `GEMINI_API_KEY` in `apps/web/.env.local`
-- Configure with `TRANSCRIPTION_PROVIDER=sarvam` in `apps/web/.env.local`
-- Prefer on-device transcription instead? Set `TRANSCRIPTION_PROVIDER=whisper_local` and run `pnpm whisper:server` ([setup guide](./docs/WHISPER-LOCAL-SETUP.md))
-
-**Language support**
-- Sarvam auto-detects the spoken language with `SARVAM_LANGUAGE=unknown` (default)
-- Force a language with an ISO code such as `en-IN` or `hi-IN`
-- For local Whisper, multilingual transcription requires a non-`.en` model (e.g. `tiny`, `base`, `small`)
-
-### Local-only Desktop (optional)
-- Transcription: local Whisper backend in `local-only/engageoscribe-backend`
-- Notes: local Ollama models (`llama3.2:*`, `gemma3:4b`)
-- No cloud inference in this path
-- First-run desktop setup wizard guides Whisper/model downloads
-- [Setup guide](./local-only/README.md)
-
-### Cloud (Sarvam + Gemini)
-- Transcription: Sarvam speech-to-text API
-- Notes: Google Gemini (or other hosted LLM)
-- Requires `SARVAM_API_KEY` and `GEMINI_API_KEY` in `apps/web/.env.local`
-- This is the default Mixed Web path above
-
-### OpenClaw + OpenEMR Demo Handoff (desktop)
-- The note editor now includes `Send to OpenClaw` (desktop app path).
-- Trigger flow: record encounter -> note appears -> click `Send to OpenClaw`.
-- EngageoScribe sends patient/note context to OpenClaw and requests an OpenEMR note action.
-
-Optional environment variables for demos:
-
-```bash
-# OpenClaw CLI (default: openclaw on PATH)
-OPENCLAW_BIN=openclaw
-
-# Target OpenClaw agent/session (default: main)
-OPENCLAW_AGENT=main
-
-# If set to 1, OpenClaw can deliver responses to a configured channel
-OPENCLAW_DELIVER=0
-
-# Optional webhook transport instead of CLI
-# OPENCLAW_DEMO_WEBHOOK_URL=http://127.0.0.1:8787/engageoscribe/handoff
-# OPENCLAW_DEMO_WEBHOOK_TOKEN=your-token
-```
-
-### FYI Getting API Keys
-
-**OpenAI** (transcription): [platform.openai.com/api-keys](https://platform.openai.com/api-keys) - Sign up → API Keys → Create new secret key
-
-**Anthropic** (note generation): [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) - Sign up → API Keys → Create Key
-
-Both services offer $5 free credits for new accounts
-
-### Staying Updated
-
-```bash
-git pull origin main  # Pull latest changes
-pnpm install          # Update dependencies
-
-# If you encounter issues after updating:
-rm -rf node_modules pnpm-lock.yaml && pnpm install
-```
-
----
-
-## Purpose and Philosophy
-
-EngageoScribe exists to provide a simple, open-source alternative to cloud dependent clinical documentation tools. The project is built on core principles:
-
-- **Local-first storage**: Encounter data is stored locally in the browser by default
-- **Privacy-conscious**: No analytics or telemetry in the web app; external model calls are explicit and configurable
-- **Modular**: Components can be swapped or extended (e.g., different LLM providers, transcription services)
-
-## Local MedGemma (Text-Only) Scribe
-
-This repo now includes a fully local, **text-only** MedGemma scribe workflow in
-`packages/pipeline/medgemma-scribe`. It requires **pre-transcribed text** and
-does not perform speech-to-text. See
-`packages/pipeline/medgemma-scribe/README.md` for setup and usage.
-
-## Project Resources
-
-- **GitHub**: [engageo/EngageoScribe](https://github.com/engageo/EngageoScribe)
-- **Maintainer**: [@engageo](https://github.com/engageo)
-- **Architecture**: [architecture.md](./architecture.md)
-- **Tests**: [packages/llm](./packages/llm/src/__tests__/), [packages/pipeline](./packages/pipeline/)
-
-## Roadmap
-
-### Current Status (v0)
-- Core recording, transcription, and note generation
-- AES-GCM encrypted local storage
-- Browser-based audio capture
-
-### Near-term (v0.1-0.5)
-- Error handling improvements
-- Comprehensive test coverage
-- Basic audit logging
-
-**Physical Controls**:
-- User responsibility (device security, physical access)
-
-### Future Goals (v2.0+)
-- Package app to be able to run 100% locally with transcription model and small 7b model for note generation
-- Multiple LLM providers (Anthropic, local models)
-- Custom note templates
-- Optional cloud sync (user-controlled)
-- Multi-language support
-- Mobile app
-- EHR integration
-- RCM integration
-
-## Architecture
-
-See [architecture.md](./architecture.md) for complete details.
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    UI Layer (Next.js)                   │
-│  ┌──────────────┐              ┌─────────────────────┐  │
-│  │ Encounter    │              │  Workflow States    │  │
-│  │ Sidebar      │◄────────────►│  - Idle             │  │
-│  │              │              │  - Recording        │  │
-│  │              │              │  - Processing       │  │
-│  │              │              │  - Note Editor      │  │
-│  └──────────────┘              └─────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│              Processing Pipeline                        │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌─────┐   │
-│  │  Audio   │──►│Transcribe│──►│   LLM    │──►│Note │   │
-│  │  Ingest  │   │ (Whisper)│   │          │   │Core │   │
-│  └──────────┘   └──────────┘   └──────────┘   └─────┘   │
-│       │                                           │     │
-│       └───────────────┐         ┌─────────────────┘     │
-└───────────────────────┼─────────┼───────────────────────┘
-                        ▼         ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Storage Layer                          │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  Encrypted LocalStorage (AES-GCM)                │   │
-│  │  - Encounters (patient data, transcripts, notes) │   │
-│  │  - Metadata (timestamps, status)                 │   │
-│  │  - Audio (in-memory only, not persisted)         │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Key Components:**
-- **UI Layer**: React components in `apps/web/` using Next.js App Router
-- **Audio Ingest**: Browser MediaRecorder API → WebM/MP4 blob
-- **Transcription (default web path)**: local Whisper server (`whisper.cpp` via `pywhispercpp`, model `tiny.en`)
-- **LLM (default web path)**: Anthropic Claude via `packages/llm`
-- **Fully local desktop path**: Whisper + Ollama via `local-only/engageoscribe-backend`
-- **Cloud fallback path**: OpenAI Whisper API + hosted provider via `packages/llm`
-- **Note Core**: Structured clinical note generation and validation
-- **Storage**: AES-GCM encrypted browser localStorage
-
-**Monorepo Structure:**
-- `apps/web/` – Next.js frontend + Electron renderer
-- `packages/pipeline/` – Audio ingest, transcription, assembly, evaluation
-- `packages/ui/` – Shared React components
-- `packages/storage/` – Encrypted storage + encounter management
-- `packages/llm/` – Provider-agnostic LLM client
-- `packages/shell/` – Electron main process
-- `config/` – Shared configuration files
-- `build/` – Build artifacts
-
-## Privacy & Data Handling
-
-**Storage**: AES-GCM encrypted localStorage. Audio processed in-memory, not persisted.  
-**Transmission**: In the default mixed mode, audio stays local for transcription and transcript text is sent to Anthropic Claude over HTTPS/TLS for note generation. If `TRANSCRIPTION_PROVIDER=whisper_openai`, audio is sent to OpenAI Whisper over HTTPS/TLS. The application enforces HTTPS-only connections and displays a security warning if accessed over HTTP in production builds.  
-**No Tracking**: Zero analytics, telemetry, or cloud sync
-
-**Use Responsibility**  
-- All AI notes are drafts requiring review
-- Ensure regulatory compliance for your use case
-- For production deployments serving PHI, ensure the application is accessed via HTTPS or served from localhost only
-
-## Limitations & Disclaimers
- 
-**HIPAA Compliance**: EngageoScribe includes foundational privacy/security features, but this alone does not make the application HIPAA-compliant. Below is what is already built, followed by a checklist a health system must complete to operate compliantly.
-
-**Built (foundational rails)**
-- AES-GCM encrypted localStorage for PHI at rest in the browser
-- Audio processed in-memory and not persisted
-- TLS/HTTPS for external API calls (Whisper, Claude)
-- No analytics/telemetry or cloud sync by default (local-first)
-- HTTPS-only enforcement in production with HTTP warning
-
-**Health System Checklist (required to run compliantly)**
-- Execute BAAs with all PHI-touching vendors (e.g., OpenAI, Anthropic, hosting providers)
-- Perform and document HIPAA Security Rule risk analysis and remediation plan
-- Implement access controls (SSO/MFA, least-privilege, session timeouts)
-- Establish audit logging, log review processes, and retention policies
-- Define data retention, backup, and secure deletion procedures for PHI
-- Configure device, endpoint, and physical safeguards (disk encryption, MDM, secure workstations)
-- Document policies and procedures (incident response, breach notification, sanctions)
-- Train workforce on HIPAA/privacy/security requirements
-- Establish key management and secret rotation procedures
-- Validate network/security posture (secure deployment, vulnerability management)
-
-**No EHR Integration**: Standalone tool  
-**Browser Storage Limits**: ~5-10MB typical  
-**No Warranty**: Provided as-is under MIT License
-
-## Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
-
-**Quick Start:**
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Submit a PR
-
-## Notices
-
-Portions of this project include or were derived from code in:
-
-**StenoAI** – https://github.com/ruzin/stenoai  
-Copyright (c) 2025 Skrape Limited  
-Licensed under the MIT License.
-
-All third-party code remains subject to its original license terms.
-
+All AI-generated notes and medical codes are **drafts requiring clinician review**.
 
 ## License
 
-MIT
-
-```
-MIT License
-
-Copyright (c) 2026 Engageo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## Citation
-
-```
-EngageoScribe
-GitHub: https://github.com/engageo/EngageoScribe
-Maintainer: Engageo (@engageo)
-```
+MIT © Engageo
